@@ -1,8 +1,10 @@
 'use strict';
+
 module.exports = (sequelize, DataTypes) => {
   const CatBreeds = sequelize.define('CatBreeds', {
     name: {
-    type: DataTypes.STRING(30)
+    type: DataTypes.STRING,
+    allowNull: false,
   } 
   }, {});
   CatBreeds.associate = function(models) {
