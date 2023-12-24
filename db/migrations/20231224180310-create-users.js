@@ -33,15 +33,6 @@ module.exports = {
       bio: {
         type: Sequelize.TEXT,
       },
-      PetPreferenceId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'PetPreference',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL'
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

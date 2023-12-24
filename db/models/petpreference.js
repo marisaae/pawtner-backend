@@ -1,7 +1,7 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
   const PetPreference = sequelize.define('PetPreference', {
-    userId: DataTypes.INTEGER,
+    petType: DataTypes.STRING,
     age: DataTypes.STRING,
     size: DataTypes.STRING,
     dogBreedId: DataTypes.INTEGER,
