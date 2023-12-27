@@ -1,19 +1,19 @@
 'use strict';
 module.exports = {
   up: (queryInterface, Sequelize) => {
-    return queryInterface.createTable('UserPetPreferences', {
+    return queryInterface.createTable('PetPreferenceDogBreeds', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      userId: {
+      dogBreedId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: "Users",
-          key: 'id'
+          model: "DogBreeds",
+          key: "id"
         },
         onUpdate: 'NO ACTION',
         onDelete: 'CASCADE'
@@ -22,7 +22,7 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: "PetPreferences",
+          model: 'PetPreferences',
           key: 'id'
         },
         onUpdate: 'NO ACTION',
@@ -39,6 +39,6 @@ module.exports = {
     });
   },
   down: (queryInterface, Sequelize) => {
-    return queryInterface.dropTable('UserPetPreferences');
+    return queryInterface.dropTable('PetPreferenceDogBreeds');
   }
 };

@@ -19,24 +19,6 @@ module.exports = {
       size: {
         type: Sequelize.STRING(50)
       },
-      dogBreedId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'DogBreeds',
-          key: 'id'
-        },
-        onUpdate: 'NO ACTION',
-        onDelete: 'SET NULL'
-      },
-      catBreedId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'CatBreeds',
-          key: 'id'
-        },
-        onUpdate: 'NO ACTION',
-        onDelete: 'SET NULL'
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
