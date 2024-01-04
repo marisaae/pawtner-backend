@@ -12,9 +12,32 @@ module.exports = (sequelize, DataTypes) => {
     size: {
       type: DataTypes.STRING
     },
+    userId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      references: {
+        model: 'Users',
+        key: 'id'
+      },
+      onUpdate: 'NO ACTION',
+      onDelete: 'CASCADE'
+    }
   }, {});
   PetPreference.associate = function(models) {
-    // associations can be defined here
+    PetPreference.belongsTo(models.Users, {
+      foreignKey: 'userId',
+      as: 'user'
+    });
+    PetPreference.belongsToMany(models.DogBreeds, {
+      through: 'PetPreferenceDogBreeds',
+      foreignKey: 'petPreferenceId',
+      otherKey: 'dogBreedId'
+    });
+    PetPreference.belongsToMany(models.CatBreeds, {
+      through: 'PetPreferenceCatBreeds',
+      foreignKey: 'petPreferenceId',
+      otherKey: 'catBreedId'
+    })
 
 
   };

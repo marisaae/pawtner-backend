@@ -9,7 +9,11 @@ module.exports = (sequelize, DataTypes) => {
   } 
   }, {});
   CatBreeds.associate = function(models) {
-    // associations can be defined here
+    CatBreeds.belongsToMany(models.PetPreference, {
+      through: 'PetPreferenceCatBreeds',
+      foreignKey: 'catBreedId',
+      otherKey: 'petPreferenceId'
+    })
   };
   return CatBreeds;
 };
