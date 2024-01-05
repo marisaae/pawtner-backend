@@ -1,5 +1,6 @@
 'use strict';
 const { Validator } = require('sequelize');
+const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize, DataTypes) => {
   const Users = sequelize.define('Users', {
@@ -60,7 +61,7 @@ module.exports = (sequelize, DataTypes) => {
         attributes: { exclude: ['hashedPassword'] }
       },
       loginUser: {
-        attributes: ['username', 'email', 'hashedPassword']
+        attributes: ['id', 'username', 'email', 'hashedPassword']
       }
     }
   });
@@ -72,3 +73,45 @@ module.exports = (sequelize, DataTypes) => {
   };
   return Users;
 };
+
+//generate JWT token with safe information
+Users.prototype.safeUserObject = function() {
+  const { id, firstName, lastName, username, email } = this;
+  return { id, firstName, lastName, username, email };
+}
+
+//validating password
+Users.prototype.validatePassword = function (password) {
+  return bcrypt.compareSync(password, this.hashedPassword.toString());
+};
+
+Users.getCurrentUserById = async function (id) {
+  return await Users.scope('currentUser').findByPk(id);
+}
+
+Users.login = async function({ credential, password }) {
+  const { Op } = require('sequelize');
+  const user = await Users.scope('loginUser').findOne({
+    where: {
+      [Op.or]: {
+        username: credential,
+        email: credential
+      }
+    }
+  });
+  if (user && user.validatePassword(password)) {
+    return await Users.scope('currentUser').findByPk(user.id);
+  }
+}
+
+Users.signup = async function({ firstName, lastName, username, email, password }) {
+  const hashedPassword = bcrypt.hashSync(password);
+  const user = await Users.create({
+    firstName,
+    lastName,
+    username,
+    email,
+    hashedPassword
+  });
+  return await Users.scope('currentUser').findByPk(user.id);
+}
