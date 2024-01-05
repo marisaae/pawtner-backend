@@ -49,7 +49,21 @@ module.exports = (sequelize, DataTypes) => {
     bio: {
       type: DataTypes.TEXT
     }, 
-  }, {});
+  }, {
+    defaultScope: {
+      attributes: {
+        exclude: ['hashedPassword', 'email', 'createdAt', 'updatedAt']
+      }
+    },
+    scopes: {
+      currentUser: {
+        attributes: { exclude: ['hashedPassword'] }
+      },
+      loginUser: {
+        attributes: ['username', 'email', 'hashedPassword']
+      }
+    }
+  });
   Users.associate = function(models) {
     Users.hasMany(models.PetPreference, {
       foreignKey: 'userId',
