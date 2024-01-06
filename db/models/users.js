@@ -71,8 +71,6 @@ module.exports = (sequelize, DataTypes) => {
       as: 'petPreferences'
     })
   };
-  return Users;
-};
 
 //generate JWT token with safe information
 Users.prototype.safeUserObject = function() {
@@ -115,3 +113,7 @@ Users.signup = async function({ firstName, lastName, username, email, password }
   });
   return await Users.scope('currentUser').findByPk(user.id);
 }
+
+  return Users;
+};
+
