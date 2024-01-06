@@ -69,6 +69,11 @@ module.exports = (sequelize, DataTypes) => {
     Users.hasMany(models.PetPreference, {
       foreignKey: 'userId',
       as: 'petPreferences'
+    });
+
+    Users.hasMany(models.UserSavedPets, {
+      foreignKey: 'userId',
+      as: 'userSavedPets'
     })
   };
 
