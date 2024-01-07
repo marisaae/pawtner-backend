@@ -2,7 +2,7 @@ const express = require("express");
 const asyncHandler = require("express-async-handler");
 
 const { setTokenCookie, requireAuth } = require("../../utils/auth");
-const { Users } = require("../../db/models");
+const { Users, PetPreference, PetPreferenceCatBreeds, PetPreferenceDogBreeds } = require("../../db/models");
 
 const router = express.Router();
 
@@ -23,7 +23,7 @@ router.post(
 
     await setTokenCookie(res, user);
 
-    return res.json({
+    return res.status(201).json({
       user,
     });
   })
@@ -60,10 +60,9 @@ router.get(
 );
 
 //update users profile - only firstName, lastName, and bio
-//api/users/:id
 router.patch(
     '/:id',
-    asyncHandler(async (req, res) => {
+    asyncHandler(async (req, res, next) => {
     const { id } = req.params;
     const { firstName, lastName, bio } = req.body;
 
@@ -83,6 +82,53 @@ router.patch(
         err.errors = ["This user was not found."]
         return next(err);
     }
+    })
+)
+
+//set user pet preference
+router.post(
+    '/:id/petPreference',
+    asyncHandler( async(req, res, next) => {
+        const { id } = req.params;
+        const { petType, age, size, breed } = req.body;
+
+        const user = await Users.findByPk(id);
+
+        if(user) {
+            const petPreference = await PetPreference.create({
+                userId: id,
+                petType,
+                age,
+                size
+            });
+
+            if (petType === 'dog') {
+                await Promise.all(breed.map(async (breedId) => {
+                    await PetPreferenceDogBreeds.create({
+                        dogBreedId: breedId,
+                        petPreferenceId: petPreference.id
+                    })
+                }))
+            } else if (petType === 'cat') {
+                await Promise.all(breed.map(async (breedId) => {
+                    await PetPreferenceCatBreeds.create({
+                        catBreedId: breedId,
+                        petPreferenceId: petPreference.id
+                    })
+                }))
+            }
+
+            return res.status(201).json({
+                petPreference,
+            })
+        } else {
+            const err = new Error("User not found");
+            err.status = 404;
+            err.title = "User not found";
+            err.errors = ["This user was not found."]
+            return next(err);
+        }
+
     })
 )
 
