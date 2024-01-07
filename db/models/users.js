@@ -79,8 +79,8 @@ module.exports = (sequelize, DataTypes) => {
 
 //generate JWT token with safe information
 Users.prototype.safeUserObject = function() {
-  const { id, firstName, lastName, username, email } = this;
-  return { id, firstName, lastName, username, email };
+  const { id, firstName, lastName, username, email, bio } = this;
+  return { id, firstName, lastName, username, email, bio };
 }
 
 //validating password
@@ -88,10 +88,12 @@ Users.prototype.validatePassword = function (password) {
   return bcrypt.compareSync(password, this.hashedPassword.toString());
 };
 
+//get current user
 Users.getCurrentUserById = async function (id) {
   return await Users.scope('currentUser').findByPk(id);
 }
 
+//login user
 Users.login = async function({ credential, password }) {
   const { Op } = require('sequelize');
   const user = await Users.scope('loginUser').findOne({
@@ -107,6 +109,7 @@ Users.login = async function({ credential, password }) {
   }
 }
 
+//signup user
 Users.signup = async function({ firstName, lastName, username, email, password }) {
   const hashedPassword = bcrypt.hashSync(password);
   const user = await Users.create({

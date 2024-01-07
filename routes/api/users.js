@@ -29,7 +29,7 @@ router.post(
   })
 );
 
-//profile
+//get profile
 router.get(
   "/:id",
   asyncHandler(async (req, res, next) => {
@@ -58,5 +58,32 @@ router.get(
     }
   })
 );
+
+//update users profile - only firstName, lastName, and bio
+//api/users/:id
+router.patch(
+    '/:id',
+    asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { firstName, lastName, bio } = req.body;
+
+    const user = await Users.getCurrentUserById(id);
+
+    if (user) {
+        user.firstName = firstName || user.firstName;
+        user.lastName = lastName || user.lastName;
+        user.bio = bio || user.bio;
+
+      await user.save();
+      res.json(user.safeUserObject());  
+    } else {
+        const err = new Error("User not found");
+        err.status = 404;
+        err.title = "User not found";
+        err.errors = ["This user was not found."]
+        return next(err);
+    }
+    })
+)
 
 module.exports = router;
