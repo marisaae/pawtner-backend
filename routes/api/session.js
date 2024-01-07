@@ -5,7 +5,7 @@ const { setTokenCookie, restoreUser } = require('../../utils/auth');
 const { Users } = require('../../db/models');
 
 const router = express.Router();
-//login, logout routes
+//login, logout, restore session routes
 
 //login
 router.post(
