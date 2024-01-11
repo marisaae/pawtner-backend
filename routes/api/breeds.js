@@ -23,6 +23,9 @@ router.get(
                 breeds
             })
         } catch (err) {
+            err.status = 500;
+            err.title = "Error retrieving breeds";
+            err.errors = ["An error occurred while retrieving the list of breeds."]
             next(err);
         }
     })

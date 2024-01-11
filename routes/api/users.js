@@ -37,7 +37,7 @@ router.post(
   })
 );
 
-//get profile
+//get profile - check on error handling?
 router.get(
   "/:id",
   asyncHandler(async (req, res, next) => {
@@ -84,7 +84,10 @@ router.patch(
       await user.save();
       res.json(user.safeUserObject());
     } catch (err) {
-      res.status(500).json({ error: "Users profile wasn't updated." });
+        err.status = 500;
+        err.title = "Error updating profile.";
+        err.errors = ["There was an error updating your profile."]
+        next(err);
     }
   })
 );
@@ -131,9 +134,10 @@ router.post(
       }
       return res.status(201).json({ petPreference });
     } catch (err) {
-      res
-        .status(500)
-        .json({ message: "The pet preference wasn't saved successfully." });
+        err.status = 500;
+        err.title = "Error saving pet preference.";
+        err.errors = ["There was an error saving your pet preference."]
+        next(err);
     }
   })
 );
@@ -157,9 +161,9 @@ router.patch(
       });
 
       if (!userPetPreference) {
-        const err = new Error("User's pet preference not found");
+        const err = new Error("Pet preference not found");
         err.status = 404;
-        err.title = "User's pet preference not found";
+        err.title = "Pet preference not found";
         err.errors = ["This user's pet preference was not found."];
         return next(err);
       }
@@ -203,9 +207,10 @@ router.patch(
       }
       return res.status(200).json({ userPetPreference });
     } catch (err) {
-      res
-        .status(500)
-        .json({ message: "The pet preference wasn't updated successfully." });
+        err.status = 500;
+        err.title = "Error updating Pet Preference.";
+        err.errors = ["There was an error updating your Pet Preference."]
+        next(err);
     }
   })
 );
@@ -253,7 +258,10 @@ router.post(
         savedPet,
       });
     } catch (err) {
-      res.status(500).json({ message: "The pet wasn't saved successfully." });
+        err.status = 500;
+        err.title = "Error saving pet.";
+        err.errors = ["There was an error saving this pet."]
+        next(err);
     }
   })
 );
