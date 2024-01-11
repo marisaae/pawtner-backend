@@ -23,7 +23,7 @@ router.post(
             return next(err);
         }
 
-        await setTokenCookie(res, user);
+        setTokenCookie(res, user);
 
         return res.json({
             user

@@ -10,6 +10,8 @@ const {
   UserSavedPets,
 } = require("../../db/models");
 
+const { userNotFound } = require("../../utils/userUtils");
+
 const router = express.Router();
 
 //signup, profile, user's pet preference, user's saved pets
@@ -27,7 +29,7 @@ router.post(
       password,
     });
 
-    await setTokenCookie(res, user);
+    setTokenCookie(res, user);
 
     return res.status(201).json({
       user,
@@ -46,11 +48,7 @@ router.get(
         if (user) {
           res.json(user.safeUserObject());
         } else {
-          const err = new Error("User not found");
-          err.status = 404;
-          err.title = "User not found";
-          err.errors = ["The user with the provided ID was not found."];
-          return next(err);
+          userNotFound(next);
         }
       } catch (err) {
         next(err);
@@ -71,10 +69,12 @@ router.patch(
   asyncHandler(async (req, res, next) => {
     const { id } = req.params;
     const { firstName, lastName, bio } = req.body;
+    try {
+      const user = await Users.getCurrentUserById(id);
+      if (!user) {
+        userNotFound(next);
+      }
 
-    const user = await Users.getCurrentUserById(id);
-
-    if (user) {
       user.set({
         firstName: firstName || user.firstName,
         lastName: lastName || user.lastName,
@@ -83,12 +83,8 @@ router.patch(
 
       await user.save();
       res.json(user.safeUserObject());
-    } else {
-      const err = new Error("User not found");
-      err.status = 404;
-      err.title = "User not found";
-      err.errors = ["This user was not found."];
-      return next(err);
+    } catch (err) {
+      res.status(500).json({ error: "Users profile wasn't updated." });
     }
   })
 );
@@ -100,9 +96,13 @@ router.post(
     const { id } = req.params;
     const { petType, age, size, breed } = req.body;
 
-    const user = await Users.findByPk(id);
+    try {
+      const user = await Users.findByPk(id);
 
-    if (user) {
+      if (!user) {
+        userNotFound(next);
+      }
+
       const petPreference = await PetPreference.create({
         userId: id,
         petType,
@@ -129,16 +129,11 @@ router.post(
           })
         );
       }
-
-      return res.status(201).json({
-        petPreference,
-      });
-    } else {
-      const err = new Error("User not found");
-      err.status = 404;
-      err.title = "User not found";
-      err.errors = ["This user was not found."];
-      return next(err);
+      return res.status(201).json({ petPreference });
+    } catch (err) {
+      res
+        .status(500)
+        .json({ message: "The pet preference wasn't saved successfully." });
     }
   })
 );
@@ -150,69 +145,68 @@ router.patch(
     const { id } = req.params;
     const { petType, age, size, breed } = req.body;
 
-    const user = await Users.findByPk(id);
+    try {
+      const user = await Users.findByPk(id);
 
-    if (!user) {
-      const err = new Error("User not found");
-      err.status = 404;
-      err.title = "User not found";
-      err.errors = ["This user was not found."];
-      return next(err);
+      if (!user) {
+        userNotFound(next);
+      }
+
+      const userPetPreference = await PetPreference.findOne({
+        where: { userId: user.id },
+      });
+
+      if (!userPetPreference) {
+        const err = new Error("User's pet preference not found");
+        err.status = 404;
+        err.title = "User's pet preference not found";
+        err.errors = ["This user's pet preference was not found."];
+        return next(err);
+      }
+
+      userPetPreference.set({
+        petType: petType || userPetPreference.petType,
+        age: age || userPetPreference.age,
+        size: size || userPetPreference.size,
+      });
+
+      await userPetPreference.save();
+
+      const petPreferenceId = userPetPreference.id;
+
+      await PetPreferenceDogBreeds.destroy({
+        where: { petPreferenceId: petPreferenceId },
+      });
+
+      await PetPreferenceCatBreeds.destroy({
+        where: { petPreferenceId: petPreferenceId },
+      });
+
+      if (petType === "dog") {
+        await Promise.all(
+          breed.map(async (breedId) => {
+            await PetPreferenceDogBreeds.create({
+              dogBreedId: breedId,
+              petPreferenceId: userPetPreference.id,
+            });
+          })
+        );
+      } else if (petType === "cat") {
+        await Promise.all(
+          breed.map(async (breedId) => {
+            await PetPreferenceCatBreeds.create({
+              catBreedId: breedId,
+              petPreferenceId: userPetPreference.id,
+            });
+          })
+        );
+      }
+      return res.status(200).json({ userPetPreference });
+    } catch (err) {
+      res
+        .status(500)
+        .json({ message: "The pet preference wasn't updated successfully." });
     }
-
-    const userPetPreference = await PetPreference.findOne({
-      where: { userId: user.id },
-    });
-
-    if (!userPetPreference) {
-      const err = new Error("User's pet preference not found");
-      err.status = 404;
-      err.title = "User's pet preference not found";
-      err.errors = ["This user's pet preference was not found."];
-      return next(err);
-    }
-
-    userPetPreference.set({
-      petType: petType || userPetPreference.petType,
-      age: age || userPetPreference.age,
-      size: size || userPetPreference.size,
-    });
-    await userPetPreference.save();
-
-    const petPreferenceId = userPetPreference.id;
-    
-    await PetPreferenceDogBreeds.destroy({
-      where: { petPreferenceId: petPreferenceId },
-    });
-
-    await PetPreferenceCatBreeds.destroy({
-      where: { petPreferenceId: petPreferenceId },
-    });
-    
-    if (petType === "dog") {
-
-      await Promise.all(
-        breed.map(async (breedId) => {
-          await PetPreferenceDogBreeds.create({
-            dogBreedId: breedId,
-            petPreferenceId: userPetPreference.id,
-          });
-        })
-      );
-    } else if (petType === "cat") {
-      await Promise.all(
-        breed.map(async (breedId) => {
-          await PetPreferenceCatBreeds.create({
-            catBreedId: breedId,
-            petPreferenceId: userPetPreference.id,
-          });
-        })
-      );
-    }
-
-    return res.status(200).json({
-      userPetPreference,
-    });
   })
 );
 
@@ -224,18 +218,14 @@ router.delete(
 
     const user = await Users.findByPk(id);
     if (!user) {
-      const err = new Error("User not found");
-      err.status = 404;
-      err.title = "User not found";
-      err.errors = ["This user was not found."];
-      return next(err);
+      userNotFound(next);
     }
 
     await PetPreference.destroy({
       where: { userId: user.id },
     });
 
-    return res.json({ message: "Pet Preference successfully deleted" });
+    return res.json({ message: "Pet Preference successfully deleted." });
   })
 );
 
@@ -246,9 +236,12 @@ router.post(
     const { id } = req.params;
     const { petId } = req.body;
 
-    const user = await Users.findByPk(id);
+    try {
+      const user = await Users.findByPk(id);
 
-    if (user) {
+      if (!user) {
+        userNotFound(next);
+      }
       const savedPet = await UserSavedPets.create({
         userId: user.id,
         petApiId: petId,
@@ -257,12 +250,10 @@ router.post(
       return res.status(201).json({
         savedPet,
       });
-    } else {
-      const err = new Error("User not found");
-      err.status = 404;
-      err.title = "User not found";
-      err.errors = ["This user was not found."];
-      return next(err);
+    } catch (err) {
+      res
+        .status(500)
+        .json({ message: "The pet wasn't saved successfully." });
     }
   })
 );
