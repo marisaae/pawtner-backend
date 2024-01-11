@@ -258,8 +258,6 @@ router.post(
   })
 );
 
-//update users saved pets
-
 //delete users saved pets
 router.delete(
   "/:id/savedPets",
