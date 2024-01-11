@@ -225,7 +225,9 @@ router.delete(
       where: { userId: user.id },
     });
 
-    return res.json({ message: "Pet Preference successfully deleted." });
+    return res
+      .status(200)
+      .json({ message: "Pet Preference successfully deleted." });
   })
 );
 
@@ -251,9 +253,7 @@ router.post(
         savedPet,
       });
     } catch (err) {
-      res
-        .status(500)
-        .json({ message: "The pet wasn't saved successfully." });
+      res.status(500).json({ message: "The pet wasn't saved successfully." });
     }
   })
 );
@@ -261,4 +261,26 @@ router.post(
 //update users saved pets
 
 //delete users saved pets
+router.delete(
+  "/:id/savedPets",
+  asyncHandler(async (req, res, next) => {
+    const { id } = req.params;
+    const { petId } = req.body;
+
+    const user = await Users.findByPk(id);
+    if (!user) {
+      userNotFound(next);
+    }
+
+    await UserSavedPets.destroy({
+      where: {
+        userId: user.id,
+        petApiId: petId,
+      },
+    });
+
+    return res.status(200).json({ message: "The pet has been removed" });
+  })
+);
+
 module.exports = router;
