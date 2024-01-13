@@ -84,10 +84,10 @@ router.patch(
       await user.save();
       res.json(user.safeUserObject());
     } catch (err) {
-        err.status = 500;
-        err.title = "Error updating profile.";
-        err.errors = ["There was an error updating your profile."]
-        next(err);
+      err.status = 500;
+      err.title = "Error updating profile.";
+      err.errors = ["There was an error updating your profile."];
+      next(err);
     }
   })
 );
@@ -134,10 +134,10 @@ router.post(
       }
       return res.status(201).json({ petPreference });
     } catch (err) {
-        err.status = 500;
-        err.title = "Error saving pet preference.";
-        err.errors = ["There was an error saving your pet preference."]
-        next(err);
+      err.status = 500;
+      err.title = "Error saving pet preference.";
+      err.errors = ["There was an error saving your pet preference."];
+      next(err);
     }
   })
 );
@@ -207,10 +207,10 @@ router.patch(
       }
       return res.status(200).json({ userPetPreference });
     } catch (err) {
-        err.status = 500;
-        err.title = "Error updating Pet Preference.";
-        err.errors = ["There was an error updating your Pet Preference."]
-        next(err);
+      err.status = 500;
+      err.title = "Error updating Pet Preference.";
+      err.errors = ["There was an error updating your Pet Preference."];
+      next(err);
     }
   })
 );
@@ -220,19 +220,26 @@ router.delete(
   "/:id/petpreference",
   asyncHandler(async (req, res, next) => {
     const { id } = req.params;
+    try {
+      const user = await Users.findByPk(id);
 
-    const user = await Users.findByPk(id);
-    if (!user) {
-      userNotFound(next);
+      if (!user) {
+        userNotFound(next);
+      }
+
+      await PetPreference.destroy({
+        where: { userId: user.id },
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Pet Preference successfully deleted." });
+    } catch (err) {
+      err.status = 500;
+      err.title = "Error deleting pet preference.";
+      err.errors = ["There was an error deleting this pet preference."];
+      next(err);
     }
-
-    await PetPreference.destroy({
-      where: { userId: user.id },
-    });
-
-    return res
-      .status(200)
-      .json({ message: "Pet Preference successfully deleted." });
   })
 );
 
@@ -258,10 +265,10 @@ router.post(
         savedPet,
       });
     } catch (err) {
-        err.status = 500;
-        err.title = "Error saving pet.";
-        err.errors = ["There was an error saving this pet."]
-        next(err);
+      err.status = 500;
+      err.title = "Error saving pet.";
+      err.errors = ["There was an error saving this pet."];
+      next(err);
     }
   })
 );
@@ -272,20 +279,26 @@ router.delete(
   asyncHandler(async (req, res, next) => {
     const { id } = req.params;
     const { petId } = req.body;
+    try {
+      const user = await Users.findByPk(id);
+      if (!user) {
+        userNotFound(next);
+      }
 
-    const user = await Users.findByPk(id);
-    if (!user) {
-      userNotFound(next);
+      await UserSavedPets.destroy({
+        where: {
+          userId: user.id,
+          petApiId: petId,
+        },
+      });
+
+      return res.status(200).json({ message: "The pet has been removed" });
+    } catch (err) {
+      err.status = 500;
+      err.title = "Error removing pet.";
+      err.errors = ["There was an error removing this pet."];
+      next(err);
     }
-
-    await UserSavedPets.destroy({
-      where: {
-        userId: user.id,
-        petApiId: petId,
-      },
-    });
-
-    return res.status(200).json({ message: "The pet has been removed" });
   })
 );
 
