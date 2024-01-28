@@ -8,14 +8,20 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [1, 30]
+        len: [1, 30],
+        notEmpty: {
+          msg: 'First Name is required.'
+        }
       }
     },
     lastName: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        len: [1, 30]
+        len: [1, 30],
+        notEmpty: {
+          msg: 'Last Name is required.'
+        }
       }
     },
     username: {
@@ -24,9 +30,12 @@ module.exports = (sequelize, DataTypes) => {
       unique: true,
       validate: {
         len: [1, 30],
+        notEmpty: {
+          msg: 'Username is required.'
+        },
         isNotEmail(value) {
           if (Validator.isEmail(value)) {
-            throw new Error('Cannot be an email.');
+            throw new Error('Username cannot be an email.');
           }
         }
       }
@@ -37,7 +46,9 @@ module.exports = (sequelize, DataTypes) => {
     unique: true,
     validate: {
       len: [3, 256],
-      isEmail: true,
+      isEmail: {
+        msg: 'Email must be a valid email.'
+      }
     }
   },
     hashedPassword: {
@@ -111,15 +122,15 @@ Users.login = async function({ credential, password }) {
 
 //signup user
 Users.signup = async function({ firstName, lastName, username, email, password }) {
-  const hashedPassword = bcrypt.hashSync(password);
-  const user = await Users.create({
-    firstName,
-    lastName,
-    username,
-    email,
-    hashedPassword
-  });
-  return await Users.scope('currentUser').findByPk(user.id);
+    const hashedPassword = bcrypt.hashSync(password);
+    const user = await Users.create({
+      firstName,
+      lastName,
+      username,
+      email,
+      hashedPassword
+    });
+    return await Users.scope('currentUser').findByPk(user.id);
 }
 
   return Users;

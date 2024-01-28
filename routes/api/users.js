@@ -19,7 +19,8 @@ const router = express.Router();
 //signup
 router.post(
   "/",
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req, res, next) => {
+    try {
     const { firstName, lastName, username, email, password } = req.body;
     const user = await Users.signup({
       firstName,
@@ -34,6 +35,14 @@ router.post(
     return res.status(201).json({
       user,
     });
+  } catch (error) {
+    if (error.status === 400) {
+      res.status(400).json({ message: error.message });
+    } else {
+      // Handle other types of errors
+      next(error);
+    }
+  }
   })
 );
 
