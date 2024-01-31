@@ -73,6 +73,9 @@ module.exports = (sequelize, DataTypes) => {
       },
       loginUser: {
         attributes: ['id', 'username', 'email', 'hashedPassword']
+      },
+      authUser: {
+        attributes: ['id', 'username', 'email']
       }
     }
   });
@@ -116,7 +119,7 @@ Users.login = async function({ credential, password }) {
     }
   });
   if (user && user.validatePassword(password)) {
-    return await Users.scope('currentUser').findByPk(user.id);
+    return await Users.scope('authUser').findByPk(user.id);
   }
 }
 
